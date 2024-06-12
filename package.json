@@ -11,5 +11,8 @@
     "url": "github.com/Aqib-Shoaib/Natours"
   },
   "author": "Aqib Shoaib",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
 }
