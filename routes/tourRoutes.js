@@ -1,6 +1,7 @@
 //npm modules
 const express = require('express');
 const tourController = require('../controllers/tourController');
+const authController = require('../controllers/authController');
 
 const tourRouter = express.Router();
 
@@ -8,7 +9,11 @@ const tourRouter = express.Router();
 
 tourRouter
   .route('/top-5-cheap')
-  .get(tourController.aliasTopFive, tourController.getAllTours);
+  .get(
+    authController.protect,
+    tourController.aliasTopFive,
+    tourController.getAllTours,
+  );
 
 tourRouter.route('/tour-stats').get(tourController.getTourStats);
 
@@ -16,13 +21,17 @@ tourRouter.route('/monthly-plan/:year').get(tourController.getMonthlyPlan);
 
 tourRouter
   .route('/')
-  .get(tourController.getAllTours)
+  .get(authController.protect, tourController.getAllTours)
   .post(tourController.addTour);
 
 tourRouter
   .route('/:id')
   .get(tourController.getTourData)
   .patch(tourController.patchTour)
-  .delete(tourController.deleteTour);
+  .delete(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide'),
+    tourController.deleteTour,
+  );
 
 module.exports = tourRouter;

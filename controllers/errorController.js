@@ -17,6 +17,12 @@ function handleValidationErrorDB(err) {
   return new APPError(message, 400);
 }
 
+const handleJWTError = (err) =>
+  new APPError(`${err.message},Please login again!`, 401);
+const handleJWTExpired = (err) =>
+  new APPError(`${err.message},Please login again`, 401);
+
+//error sender functions
 function sendErrorDev(err, res) {
   res.status(err.statusCode).json({
     status: err.status,
@@ -32,6 +38,7 @@ function sendErrorProd(err, res) {
       message: err.message,
     });
   } else {
+    console.log('error----', err);
     res.status(500).json({
       status: 'fail',
       err: err,
@@ -39,6 +46,8 @@ function sendErrorProd(err, res) {
     });
   }
 }
+
+//error copying functions
 function copyError(err) {
   const errorCopy = {};
 
@@ -66,6 +75,12 @@ module.exports = (err, req, res, next) => {
     //handling validation error
     if (error._message === 'Validation failed')
       error = handleValidationErrorDB(error);
+
+    //invalid jwt token error
+    if (error.name === 'JsonWebTokenError') error = handleJWTError(error);
+
+    //token expired error
+    if (error.name === 'TokenExpiredError') error = handleJWTExpired(error);
 
     //sending final error to the handler
     sendErrorProd(error, res);
