@@ -12,12 +12,20 @@ const sendEmail = require('../utils/email');
 //helpers
 function signToken(id) {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES,
+    expiresIn: process.env.JWT_EXPIRES * 24 * 60 * 60 * 1000,
   });
 }
 
 function createSendToken(user, statusCode, res) {
   const token = signToken(user._id);
+
+  const cookieOptions = {
+    expiresIn: process.env.JWT_COOKIE_EXPIRES,
+    httpOnly: true,
+  };
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+
+  res.cookie('jwt', token, cookieOptions);
 
   res.status(statusCode).json({
     status: 'success',
