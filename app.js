@@ -12,6 +12,7 @@ const hpp = require('hpp');
 //custom module exports
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
+const reviewRouter = require('./routes/reviewRoutes');
 const GlobalErrorHandler = require('./controllers/errorController');
 
 const app = express();
@@ -48,6 +49,7 @@ app.use(express.static(`${__dirname}/public/`));
 
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/reviews', reviewRouter);
 
 app.all('*', (req, res, next) => {
   const err = new Error(

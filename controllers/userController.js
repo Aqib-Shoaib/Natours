@@ -1,6 +1,7 @@
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const APPError = require('../utils/appError');
+const factory = require('./handlerFactory');
 
 //helpers
 function filterObj(obj, ...allowedFields) {
@@ -14,19 +15,6 @@ function filterObj(obj, ...allowedFields) {
 }
 
 //handlers
-
-exports.getAllUsers = catchAsync(async (req, res) => {
-  const users = await User.find();
-
-  //sending the response
-  res.status(200).json({
-    status: 'success',
-    results: users.length,
-    data: {
-      users,
-    },
-  });
-});
 
 exports.updateMe = catchAsync(async (req, res, next) => {
   if (req.body.password || req.body.passwordConfirm) {
@@ -63,27 +51,20 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getMe = (req,res,next)=>{
+  req.params.id = req.user.id;
+  next();
+}
+
 exports.addUser = (req, res) => {
   res.status(500).send({
     status: 'fail',
-    message: "Can't Provide this data right now!",
+    message: 'This route is not yet implmeneted, use /signup instead',
   });
 };
-exports.getUserData = (req, res) => {
-  res.status(500).send({
-    status: 'fail',
-    message: "Can't Provide this data right now!",
-  });
-};
-exports.patchUser = (req, res) => {
-  res.status(500).send({
-    status: 'fail',
-    message: "Can't Provide this data right now!",
-  });
-};
-exports.deleteUser = (req, res) => {
-  res.status(500).send({
-    status: 'fail',
-    message: "Can't Provide this data right now!",
-  });
-};
+
+
+exports.getAllUsers = factory.getAll(User);
+exports.getUserData = factory.getOne(User);
+exports.patchUser = factory.updateOne(User);
+exports.deleteUser = factory.deleteOne(User);
