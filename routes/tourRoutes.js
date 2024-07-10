@@ -20,17 +20,31 @@ tourRouter
 
 tourRouter.route('/tour-stats').get(tourController.getTourStats);
 
-tourRouter.route('/monthly-plan/:year').get(tourController.getMonthlyPlan);
+tourRouter
+  .route('/monthly-plan/:year')
+  .get(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide', 'guide'),
+    tourController.getMonthlyPlan,
+  );
 
 tourRouter
   .route('/')
-  .get(authController.protect, tourController.getAllTours)
-  .post(tourController.addTour);
+  .get(tourController.getAllTours)
+  .post(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide'),
+    tourController.addTour,
+  );
 
 tourRouter
   .route('/:id')
   .get(tourController.getTourData)
-  .patch(tourController.patchTour)
+  .patch(
+    authController.protect,
+    authController.restrictTo('admin', 'lead-guide'),
+    tourController.patchTour,
+  )
   .delete(
     authController.protect,
     authController.restrictTo('admin', 'lead-guide'),

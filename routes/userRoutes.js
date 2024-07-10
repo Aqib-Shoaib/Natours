@@ -11,20 +11,27 @@ userRouter.post('/login', authController.login);
 
 userRouter.post('/forgot-password', authController.forgotPassword);
 userRouter.patch('/reset-password/:token', authController.resetPassword);
+
+//protecting routes by using middleware sequence
+userRouter.use(authController.protect);
+
 userRouter.patch(
   '/update-password',
-  authController.protect,
+
   authController.updatePassword,
 );
 
 userRouter.get(
   '/me',
-  authController.protect,
+
   userController.getMe,
   userController.getUserData,
 );
-userRouter.patch('/updateMe', authController.protect, userController.updateMe);
-userRouter.delete('/deleteMe', authController.protect, userController.deleteMe);
+userRouter.patch('/updateMe', userController.updateMe);
+userRouter.delete('/deleteMe', userController.deleteMe);
+
+//restricting the following routes to admin
+userRouter.use(authController.restrictTo('admin'));
 
 userRouter
   .route('/')
