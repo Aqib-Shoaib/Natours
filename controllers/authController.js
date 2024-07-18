@@ -51,8 +51,6 @@ exports.signup = catchAsync(async (req, res, next) => {
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-
-  //if no email,password in req.body
   if (!email || !password) {
     return next(new APPError('Please Provide both email and Password', 401));
   }
@@ -69,6 +67,26 @@ exports.login = catchAsync(async (req, res, next) => {
   createSendToken(user, 200, res);
 });
 
+exports.isLoggedIn = async (req, res, next) => {
+  if (req.cookies.jwt) {
+    try {
+      const decode = await promisify(jwt.verify)(
+        req.cookies.jwt,
+        process.env.JWT_SECRET,
+      );
+      const freshUser = await User.findById(decode.id);
+      if (!freshUser) return next();
+      if (freshUser.changedPassword(decode.iat)) return next();
+
+      res.locals.user = freshUser;
+      return next();
+    } catch (err) {
+      return next();
+    }
+  }
+  next();
+};
+
 exports.protect = catchAsync(async (req, res, next) => {
   //getting the token if it exists
   let token;
@@ -77,6 +95,8 @@ exports.protect = catchAsync(async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies.jwt) {
+    token = req.cookies.jwt;
   }
   if (!token)
     return next(
@@ -198,3 +218,13 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   //sending the token
   createSendToken(user, 200, res);
 });
+
+exports.logout = (req, res) => {
+  res.cookie('jwt', 'loggedout', {
+    expiresIn: new Date(Date.now() * 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({
+    status: 'success',
+  });
+};

@@ -44,6 +44,7 @@ const tourSchema = new mongoose.Schema(
       default: 4.5,
       min: [1, 'Rating should be greater than 1.0'],
       max: [5, 'Rating can not be more than 5.0'],
+      set: (val) => Math.round(val * 10) / 10,
     },
     summary: {
       type: String,
@@ -70,7 +71,7 @@ const tourSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    startLocations: {
+    startLocation: {
       type: {
         type: String,
         default: 'Point',
@@ -117,6 +118,7 @@ const tourSchema = new mongoose.Schema(
 //indexes
 tourSchema.index({ price: 1, ratingsAverage: -1 });
 tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocations: '2dsphere' });
 
 tourSchema.pre('save', function (next) {
   //works on .save() & .create() not on .insertMany(), update()etc
@@ -137,10 +139,10 @@ tourSchema.pre(/^find/, function (next) {
   next();
 });
 
-tourSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({ $match: { secretTours: { $ne: true } } });
-  next();
-});
+// tourSchema.pre('aggregate', function (next) {
+//   this.pipeline().unshift({ $match: { secretTours: { $ne: true } } });
+//   next();
+// });
 
 //virtual property
 tourSchema.virtual('durationWeeks').get(function () {
