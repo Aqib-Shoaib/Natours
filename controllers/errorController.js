@@ -23,28 +23,50 @@ const handleJWTExpired = (err) =>
   new APPError(`${err.message},Please login again`, 401);
 
 //error sender functions
-function sendErrorDev(err, res) {
-  res.status(err.statusCode).json({
-    status: err.status,
-    error: err,
-    message: err.message,
-    stack: err.stack,
+function sendErrorDev(err, req, res) {
+  //error within api
+  if (req.originalUrl.startsWith('/api')) {
+    return res.status(err.statusCode).json({
+      status: err.status,
+      error: err,
+      message: err.message,
+      stack: err.stack,
+    });
+  }
+  //error within rendered website
+  res.status(err.statusCode).render('error', {
+    title: 'Something went wrong!',
+    msg: err.message,
   });
 }
-function sendErrorProd(err, res) {
-  if (err.isOperational) {
-    res.status(err.statusCode).json({
-      status: err.status,
-      message: err.message,
-    });
-  } else {
+function sendErrorProd(err, req, res) {
+  //error within api
+  if (req.originalUrl.startsWith('/api')) {
+    if (err.isOperational) {
+      return res.status(err.statusCode).json({
+        status: err.status,
+        message: err.message,
+      });
+    }
     console.log('error----', err);
-    res.status(500).json({
+    return res.status(500).json({
       status: 'fail',
       err: err,
       message: 'Internal Server Error!',
     });
   }
+
+  if (err.isOperational) {
+    return res.status(err.statusCode).render('error',{
+      title: 'Something went wrong!',
+      msg:err.message,
+    });
+  }
+  console.log('error----', err);
+  return res.status(500).render('error',{
+    title:"Server Error!",
+    msg: 'Internal Server Error'
+  });
 }
 
 //error copying functions
@@ -83,11 +105,11 @@ module.exports = (err, req, res, next) => {
     if (error.name === 'TokenExpiredError') error = handleJWTExpired(error);
 
     //sending final error to the handler
-    sendErrorProd(error, res);
+    sendErrorProd(error, req, res);
   } else if (process.env.NODE_ENV === 'development') {
     err.statusCode = err.statusCode || 500;
     err.status = err.status || 'error';
-    sendErrorDev(err, res);
+    sendErrorDev(err, req, res);
   }
 
   next();

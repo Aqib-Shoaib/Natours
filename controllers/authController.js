@@ -124,6 +124,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   //if all guard clauses pass
   req.user = freshUser;
+  res.locals.user = freshUser;
   next();
 });
 

@@ -1,3 +1,7 @@
+/* eslint-disable import/no-extraneous-dependencies */
+const multer = require('multer');
+const sharp = require('sharp');
+
 const User = require('../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const APPError = require('../utils/appError');
@@ -14,7 +18,47 @@ function filterObj(obj, ...allowedFields) {
   return newObj;
 }
 
+//multer configurations
+// const multerStorage = multer.diskStorage({
+//   destinations: (req, file, cb) => {
+//     cb(null, 'public/img/users');
+//   },
+//   filename: (req, file, cb) => {
+//     const ext = file.mimetype.split('/')[1];
+//     const fname = `user-${req.user.id}-${Date.now()}.${ext}`;
+//     cb(null, fname);
+//   },
+// });
+const multerStorage = multer.memoryStorage();
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    cb(new APPError('Please upload images only', 400), false);
+  }
+};
+
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+
 //handlers
+
+exports.uploadPhoto = upload.single('photo');
+exports.resizePhoto = catchAsync(async (req, res, next) => {
+  if (!req.file) return next();
+
+  req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
+
+  await sharp(req.file.buffer)
+    .resize(500, 500)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/users/${req.file.filename}`);
+
+  next();
+});
 
 exports.updateMe = catchAsync(async (req, res, next) => {
   if (req.body.password || req.body.passwordConfirm) {
@@ -27,6 +71,8 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   }
   //updating the document
   const filteredObj = filterObj(req.body, 'name', 'email');
+  if (req.file) filteredObj.photo = req.file.filename;
+
   const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredObj, {
     new: true,
     runValidators: true,
@@ -51,10 +97,10 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.getMe = (req,res,next)=>{
+exports.getMe = (req, res, next) => {
   req.params.id = req.user.id;
   next();
-}
+};
 
 exports.addUser = (req, res) => {
   res.status(500).send({
@@ -62,7 +108,6 @@ exports.addUser = (req, res) => {
     message: 'This route is not yet implmeneted, use /signup instead',
   });
 };
-
 
 exports.getAllUsers = factory.getAll(User);
 exports.getUserData = factory.getOne(User);

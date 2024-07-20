@@ -27,7 +27,7 @@ mongoose.connect(uri).then(() => {
 const PORT = process.env.PORT || 8000;
 const server = app.listen(PORT, () => {
   // eslint-disable-next-line no-console
-  console.log(`Listening to ${PORT}...`);
+  console.log(`Listening to ${PORT}...in ${process.env.NODE_ENV} mode...`);
 });
 
 //handling unhandlerd promise rejections

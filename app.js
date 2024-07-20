@@ -77,6 +77,7 @@ app.all('*', (req, res, next) => {
   );
   err.statusCode = 404;
   err.status = 'fail';
+  err.isOperational = true;
   next(err);
 });
 

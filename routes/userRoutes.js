@@ -28,7 +28,12 @@ userRouter.get(
   userController.getMe,
   userController.getUserData,
 );
-userRouter.patch('/updateMe', userController.updateMe);
+userRouter.patch(
+  '/updateMe',
+  userController.uploadPhoto,
+  userController.resizePhoto,
+  userController.updateMe,
+);
 userRouter.delete('/deleteMe', userController.deleteMe);
 
 //restricting the following routes to admin
