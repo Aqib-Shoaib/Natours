@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const APPError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-const sendEmail = require('../utils/email');
+const Email = require('../utils/email');
 
 //helpers
 function signToken(id) {
@@ -46,6 +46,8 @@ exports.signup = catchAsync(async (req, res, next) => {
     role: req.body.role,
   });
 
+  const url = `${req.protocol}://${req.get('host')}/account`;
+  await new Email(newUser, url).sendWelcome();
   createSendToken(newUser, 201, res);
 });
 
@@ -148,14 +150,8 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
 
   const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/users/reset-password/${resetToken}`;
-
-  const message = `We recieved a request a for password update from this gmail. If you made that request, then follow this url: ${resetUrl} \n Otherwise just ignore this email`;
   try {
-    await sendEmail({
-      email: user.email,
-      subject: 'Your Password reset token(valid for 10 mins)',
-      message,
-    });
+    await new Email(user, resetUrl).sendResetPassword();
     res.status(200).json({
       status: 'success',
       message: 'token sent via mail',
